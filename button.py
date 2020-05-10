@@ -22,3 +22,11 @@ class Button(pygame.sprite.Sprite):
             self.rect.x, self.rect.y = BUTTON_SOUNDUP_POS
         elif type == "sound/sound_down":
             self.rect.x, self.rect.y = BUTTON_SOUNDDOWN_POS
+        elif type == "menu_buttons/play":
+            self.rect.x, self.rect.y = BUTTON_MENU_PLAY_POS
+        elif type == "menu_buttons/ai_play":
+            self.rect.x, self.rect.y = BUTTON_MENU_AIPLAY_POS
+        elif type == "menu_buttons/leaderboard":
+            self.rect.x, self.rect.y = BUTTON_MENU_LEADERBOARD_POS
+        elif type == "menu_buttons/quit":
+            self.rect.x, self.rect.y = BUTTON_MENU_QUIT_POS

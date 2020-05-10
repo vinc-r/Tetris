@@ -53,6 +53,15 @@ class Game:
             Button("sound/sound_down")
         ]
 
+        self.menu_buttons = [
+            Button("menu_buttons/play"),
+            Button("menu_buttons/ai_play"),
+            Button("menu_buttons/leaderboard"),
+            Button("menu_buttons/quit")
+        ]
+
+        self.pause_message = Button("pause_message")
+
         x_offset = STATISTICS_BOARD_COL_WIDTH
         y_offset = STATISTICS_BOARD_LINE_HEIGHT
         self.board = [
@@ -83,10 +92,8 @@ class Game:
     def pause(self):
         # self.pause_clock = pygame.time.Clock()
         self.clock.tick()
-        self.buttons.append(Button("pause_message"))
 
     def resume(self):
-        self.buttons.remove(self.buttons[len(self.buttons)-1])
         self.time_out_of_playing += self.clock.get_time()
         self.clock.tick()
 

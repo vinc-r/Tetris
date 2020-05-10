@@ -6,7 +6,7 @@ class Cube(pygame.sprite.Sprite):
 
     def __init__(self, x, y, type="bg"):
         super().__init__()
-        self.image = pygame.image.load('img/pieces/'+type+'.png')
+        self.image = pygame.image.load('img/cube/'+type+'.png')
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y

@@ -109,6 +109,8 @@ class Game:
             positions = self.tetrimino.move_down(self.grid_list)
             # if triomino can't move down => new triomino
             if type(positions) == list:
+                # update score
+                self.score += SCORING["tetrimino"]
                 # add triomino to grid if can't move down
                 for pos in positions:
                     self.grid_list[pos[1]][pos[0]] = self.tetrimino.shape.lower()
@@ -150,7 +152,27 @@ class Game:
         self.board[9].update_text(str(int(self.get_playing_time())))
 
     def check_completed_lines(self):
-        nb_lines = "TODO"
+        # caculate number of completed lines by creating bool list of completed lines
+        li_completed_lines = (np.array(self.grid_list) != "e").sum(axis=1) == TETRIS_WIDTH + 2
+        li_completed_lines = li_completed_lines[1:len(li_completed_lines)-1].tolist()
+        nb_lines = sum(li_completed_lines)
+        if nb_lines > 0:
+            id_completed_lines = np.arange(1, 23)[li_completed_lines].tolist()
+            id_completed_lines.reverse()
+            for id in id_completed_lines:
+                del self.grid_list[id]
+            for i in range(nb_lines):
+                self.grid_list.insert(1, ['e'] * (TETRIS_WIDTH + 2))
+                self.grid_list[1][0], self.grid_list[1][TETRIS_WIDTH + 1] = ("w", "w")
+            # update cube position
+            self.update_grid()
+            # update statistics board
+            self.lines += nb_lines
+            self.level_score += LEVEL_SCORING[str(nb_lines)+"_line"]
+            self.level = self.level_score // 10
+            self.score += SCORING[str(nb_lines)+"_line"]
+            self.update_speed()
+
 
     def get_playing_time(self):
         return self.time_playing / 1000

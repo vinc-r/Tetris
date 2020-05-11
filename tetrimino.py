@@ -4,8 +4,42 @@ from cube import Cube
 from constants import MARGIN, CUBE_SIZE, NEXT_TETRIS_POS, TIME_BETWEEN_MOVE, TETRIMINO_ID, NEXT_TETRIS_CUBES_POS
 
 
+def convert_pixel_positions(positions_pixels):
+    return [convert_pixel_position(pos) for pos in positions_pixels]
+
+
 def convert_pixel_position(positions_pixels):
-    return [(int((pos[0]-MARGIN)/CUBE_SIZE), int((pos[1]-MARGIN)/CUBE_SIZE)) for pos in positions_pixels]
+    return int((positions_pixels[0] - MARGIN) / CUBE_SIZE), int((positions_pixels[1] - MARGIN) / CUBE_SIZE)
+
+
+# translation_dict to spin tetrimino who can hold in 3*3 square (L, J, S, T, Z)
+SPIN_3X3 = {
+    "top_left": (2, 0, "top_right"),
+    "top": (1, 1, "right"),
+    "top_right": (0, 2, "bottom_right"),
+    "right": (-1, 1, "bottom"),
+    "bottom_right": (-2, 0, "bottom_left"),
+    "bottom": (-1, -1, "left"),
+    "bottom_left": (0, -2, "top_left"),
+    "left": (1, -1, "top")
+}
+
+# translation_dict to spin tetrimino who can hold in 4*4 square => only for I
+# ex : line_1_col_0 will be change to line_0_col_2 after spin
+SPIN_4X4 = {
+    "l0_c1": (2, 1, "l1_c3"),
+    "l0_c2": (1, 2, "l2_c3"),
+    "l1_c3": (-1, 2, "l3_c2"),
+    "l2_c3": (-2, 1, "l3_c1"),
+    "l3_c2": (-2, -1, "l2_c0"),
+    "l3_c1": (-1, -2, "l1_c0"),
+    "l2_c0": (1, -2, "l0_c1"),
+    "l1_c0": (2, -1, "l0_c2"),
+    "l1_c1": (1, 0, "l1_c2"),
+    "l1_c2": (0, 1, "l2_c2"),
+    "l2_c2": (-1, 0, "l2_c1"),
+    "l2_c1": (0, -1, "l1_c1")
+}
 
 
 class Tetrimino:
@@ -21,10 +55,11 @@ class Tetrimino:
         self.time_last_move_right = TIME_BETWEEN_MOVE       # init able to move
         # initialize empty cubes
         self.cubes = []
+        self.spin_state = 0
 
     def move_down(self, grid):
         positions_pixels = [(cube.rect.x, cube.rect.y) for cube in self.cubes]
-        positions = convert_pixel_position(positions_pixels)
+        positions = convert_pixel_positions(positions_pixels)
         for pos in positions:
             if grid[pos[1]+1][pos[0]] != "e":
                 return positions
@@ -36,7 +71,7 @@ class Tetrimino:
 
     def move_left(self, grid):
         positions_pixels = [(cube.rect.x, cube.rect.y) for cube in self.cubes]
-        positions = convert_pixel_position(positions_pixels)
+        positions = convert_pixel_positions(positions_pixels)
         for pos in positions:
             if grid[pos[1]][pos[0]-1] != "e":
                 return False
@@ -48,7 +83,7 @@ class Tetrimino:
 
     def move_right(self, grid):
         positions_pixels = [(cube.rect.x, cube.rect.y) for cube in self.cubes]
-        positions = convert_pixel_position(positions_pixels)
+        positions = convert_pixel_positions(positions_pixels)
         for pos in positions:
             if grid[pos[1]][pos[0]+1] != "e":
                 return False
@@ -64,8 +99,27 @@ class Tetrimino:
             positions = self.move_down(grid)
         return positions
 
+    def spin_tetrimino_3X3(self, grid):
+        movement_allowed = True
 
+        for cube in self.cubes:
+            if cube.pos != "center":
+                future_pos = convert_pixel_position((
+                    cube.rect.x + CUBE_SIZE * SPIN_3X3[cube.pos][0],
+                    cube.rect.y + CUBE_SIZE * SPIN_3X3[cube.pos][1]
+                ))
+                if grid[future_pos[1]][future_pos[0]] != "e":
+                    movement_allowed = False
+                    break
 
+        if movement_allowed:
+
+            for cube in self.cubes:
+                if cube.pos != "center":
+                    cube.rect.x += CUBE_SIZE * SPIN_3X3[cube.pos][0]
+                    cube.rect.y += CUBE_SIZE * SPIN_3X3[cube.pos][1]
+                    cube.pos = SPIN_3X3[cube.pos][2]
+            print("SPIN")
 
 
 class NextTetrimino:
@@ -97,8 +151,8 @@ class O(Tetrimino):
         ]
 
     def spin_tetrimino(self, grid):
-        # TODO
-        print("SPIN")
+        # no spin for Tetrimino O (always the same position)
+        pass
 
 
 class I(Tetrimino):
@@ -106,15 +160,32 @@ class I(Tetrimino):
     def __init__(self):
         super().__init__(shape="I")
         self.cubes = [
-            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 4, y=MARGIN + CUBE_SIZE * 2),
-            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 5, y=MARGIN + CUBE_SIZE * 2),
-            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 6, y=MARGIN + CUBE_SIZE * 2),
-            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 7, y=MARGIN + CUBE_SIZE * 2)
+            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 4, y=MARGIN + CUBE_SIZE * 2, pos="l1_c0"),
+            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 5, y=MARGIN + CUBE_SIZE * 2, pos="l1_c1"),
+            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 6, y=MARGIN + CUBE_SIZE * 2, pos="l1_c2"),
+            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 7, y=MARGIN + CUBE_SIZE * 2, pos="l1_c3")
         ]
 
     def spin_tetrimino(self, grid):
-        # TODO
-        print("SPIN")
+        movement_allowed = True
+
+        for cube in self.cubes:
+            future_pos = convert_pixel_position((
+                cube.rect.x + CUBE_SIZE * SPIN_4X4[cube.pos][0],
+                cube.rect.y + CUBE_SIZE * SPIN_4X4[cube.pos][1]
+            ))
+            if grid[future_pos[1]][future_pos[0]] != "e":
+                movement_allowed = False
+                break
+
+        if movement_allowed:
+            for cube in self.cubes:
+                cube.rect.x += CUBE_SIZE * SPIN_4X4[cube.pos][0]
+                cube.rect.y += CUBE_SIZE * SPIN_4X4[cube.pos][1]
+                cube.pos = SPIN_4X4[cube.pos][2]
+            self.spin_state = (self.spin_state + 1) % 4
+
+            print("SPIN")
 
 
 class J(Tetrimino):
@@ -122,30 +193,14 @@ class J(Tetrimino):
     def __init__(self):
         super().__init__(shape="J")
         self.cubes = [
-            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 4, y=MARGIN + CUBE_SIZE * 1),
-            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 4, y=MARGIN + CUBE_SIZE * 2),
-            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 5, y=MARGIN + CUBE_SIZE * 2),
-            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 6, y=MARGIN + CUBE_SIZE * 2)
+            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 4, y=MARGIN + CUBE_SIZE * 1, pos="top_left"),
+            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 4, y=MARGIN + CUBE_SIZE * 2, pos="left"),
+            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 5, y=MARGIN + CUBE_SIZE * 2, pos="center"),
+            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 6, y=MARGIN + CUBE_SIZE * 2, pos="right")
         ]
 
     def spin_tetrimino(self, grid):
-        # TODO
-        print("SPIN")
-
-class J(Tetrimino):
-
-    def __init__(self):
-        super().__init__(shape="J")
-        self.cubes = [
-            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 4, y=MARGIN + CUBE_SIZE * 1),
-            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 4, y=MARGIN + CUBE_SIZE * 2),
-            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 5, y=MARGIN + CUBE_SIZE * 2),
-            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 6, y=MARGIN + CUBE_SIZE * 2)
-        ]
-
-    def spin_tetrimino(self, grid):
-        # TODO
-        print("SPIN")
+        self.spin_tetrimino_3X3(grid)
 
 
 class S(Tetrimino):
@@ -153,15 +208,14 @@ class S(Tetrimino):
     def __init__(self):
         super().__init__(shape="S")
         self.cubes = [
-            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 4, y=MARGIN + CUBE_SIZE * 2),
-            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 5, y=MARGIN + CUBE_SIZE * 2),
-            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 5, y=MARGIN + CUBE_SIZE * 1),
-            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 6, y=MARGIN + CUBE_SIZE * 1)
+            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 4, y=MARGIN + CUBE_SIZE * 2, pos="left"),
+            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 5, y=MARGIN + CUBE_SIZE * 2, pos="center"),
+            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 5, y=MARGIN + CUBE_SIZE * 1, pos="top"),
+            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 6, y=MARGIN + CUBE_SIZE * 1, pos="top_right")
         ]
 
     def spin_tetrimino(self, grid):
-        # TODO
-        print("SPIN")
+        self.spin_tetrimino_3X3(grid)
 
 
 class T(Tetrimino):
@@ -169,15 +223,14 @@ class T(Tetrimino):
     def __init__(self):
         super().__init__(shape="T")
         self.cubes = [
-            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 4, y=MARGIN + CUBE_SIZE * 1),
-            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 5, y=MARGIN + CUBE_SIZE * 1),
-            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 5, y=MARGIN + CUBE_SIZE * 2),
-            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 6, y=MARGIN + CUBE_SIZE * 1)
+            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 4, y=MARGIN + CUBE_SIZE * 2, pos="left"),
+            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 5, y=MARGIN + CUBE_SIZE * 2, pos="center"),
+            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 5, y=MARGIN + CUBE_SIZE * 1, pos="top"),
+            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 6, y=MARGIN + CUBE_SIZE * 2, pos="right")
         ]
 
     def spin_tetrimino(self, grid):
-        # TODO
-        print("SPIN")
+        self.spin_tetrimino_3X3(grid)
 
 
 class Z(Tetrimino):
@@ -185,15 +238,14 @@ class Z(Tetrimino):
     def __init__(self):
         super().__init__(shape="Z")
         self.cubes = [
-            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 4, y=MARGIN + CUBE_SIZE * 1),
-            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 5, y=MARGIN + CUBE_SIZE * 1),
-            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 5, y=MARGIN + CUBE_SIZE * 2),
-            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 6, y=MARGIN + CUBE_SIZE * 2)
+            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 4, y=MARGIN + CUBE_SIZE * 1, pos="top_left"),
+            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 5, y=MARGIN + CUBE_SIZE * 1, pos="top"),
+            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 5, y=MARGIN + CUBE_SIZE * 2, pos="center"),
+            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 6, y=MARGIN + CUBE_SIZE * 2, pos="right")
         ]
 
     def spin_tetrimino(self, grid):
-        # TODO
-        print("SPIN")
+        self.spin_tetrimino_3X3(grid)
 
 
 class L(Tetrimino):
@@ -201,12 +253,11 @@ class L(Tetrimino):
     def __init__(self):
         super().__init__(shape="L")
         self.cubes = [
-            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 4, y=MARGIN + CUBE_SIZE * 1),
-            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 5, y=MARGIN + CUBE_SIZE * 1),
-            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 4, y=MARGIN + CUBE_SIZE * 2),
-            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 6, y=MARGIN + CUBE_SIZE * 1)
+            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 4, y=MARGIN + CUBE_SIZE * 2, pos="left"),
+            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 5, y=MARGIN + CUBE_SIZE * 2, pos="center"),
+            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 6, y=MARGIN + CUBE_SIZE * 2, pos="right"),
+            Cube(type=self.shape, x=MARGIN + CUBE_SIZE * 6, y=MARGIN + CUBE_SIZE * 1, pos="top_right")
         ]
 
     def spin_tetrimino(self, grid):
-        # TODO
-        print("SPIN")
+        self.spin_tetrimino_3X3(grid)

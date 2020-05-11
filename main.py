@@ -34,6 +34,7 @@ if __name__ == "__main__":
         screen.fill(BLACK)
 
         print(state)
+        print(game.tetrimino.spin_state)
 
         if state == "playing":
             state, running = handle_state_playing(game=game, screen=screen, sound=sound)

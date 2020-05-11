@@ -1,4 +1,5 @@
 import pygame
+import os
 from constants import *
 from game import Game
 from functions_handdle_state import *
@@ -7,6 +8,7 @@ from functions_handdle_state import *
 if __name__ == "__main__":
 
     # initialize pygame window
+    os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % WINDOWS_POSITION
     pygame.init()
     pygame.display.set_caption(TITLE)
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))

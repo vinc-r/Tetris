@@ -1,9 +1,10 @@
 import pygame
+import random
 from button import Button
 from cube import Cube
 from statistics_borad import Board
-from constants import CUBE_SIZE, GRID_INIT, MARGIN, STATISTICS_BOARD_POS, STATISTICS_BOARD_LINE_HEIGHT
-from constants import STATISTICS_BOARD_COL_WIDTH, NEXT_TETRIS_POS, NEXT_TETRIS_TEXT_POS
+from constants import *
+from tetrimino import *
 
 
 class Game:
@@ -21,10 +22,12 @@ class Game:
         self.time_playing = 0
         self.actions = 0
         self.APM = 0
+        self.speed = SPEED_LEVEL[self.level]
 
+        self.grid_list = GRID_INIT.tolist()
         self.grid = []
         x = y = MARGIN
-        for line in GRID_INIT.tolist():
+        for line in self.grid_list:
             for cube in line:
                 if cube == "w":
                     self.grid.append(Cube(x=x, y=y, type="wall"))
@@ -39,7 +42,7 @@ class Game:
         # add grid for next tetrimino
         for i in range(4):
             for j in range(4):
-                self.grid.append(Cube(x=x, y=y, type="bg"))
+                self.grid_nex_tetris.append(Cube(x=x, y=y, type="bg"))
                 x += CUBE_SIZE
             x = NEXT_TETRIS_POS[0]
             y += CUBE_SIZE
@@ -80,8 +83,74 @@ class Game:
             Board("Next Tetrimino", pos=NEXT_TETRIS_TEXT_POS)
         ]
 
-    def update_board(self):
-        self.board[0].update_text("Level")
+        exec('self.tetrimino = ' + random.choice(TETRIMINO_ID) + '()')
+        self.next_tetrimino = NextTetrimino(shape=random.choice(TETRIMINO_ID))
+
+        # pressed keyboard
+        self.pressed = {
+            pygame.K_RIGHT: False,
+            pygame.K_LEFT: False,
+            pygame.K_DOWN: False
+        }
+
+    def update_game(self):
+        # Update moving clocks
+        self.tetrimino.time_last_move_down += self.tetrimino.clock_down.get_time()
+        self.tetrimino.clock_down.tick()
+        self.tetrimino.time_last_move_right += self.tetrimino.clock_right.get_time()
+        self.tetrimino.clock_right.tick()
+        self.tetrimino.time_last_move_left += self.tetrimino.clock_left.get_time()
+        self.tetrimino.clock_left.tick()
+        if (self.tetrimino.time_last_move_down / 1000 >= self.speed) or \
+                (self.pressed[pygame.K_DOWN] and self.tetrimino.time_last_move_down / 1000 >= TIME_BETWEEN_MOVE):
+            # try to move down
+            #   - if not possible (return position of cubes of triominos)
+            #   - if possible (return True)
+            positions = self.tetrimino.move_down(self.grid_list)
+            # if triomino can't move down => new triomino
+            if type(positions) == list:
+                # add triomino to grid if can't move down
+                for pos in positions:
+                    self.grid_list[pos[1]][pos[0]] = self.tetrimino.shape.lower()
+                self.update_grid()
+                shape = self.next_tetrimino.shape
+                exec('self.tetrimino = ' + shape + '()')
+                self.next_tetrimino = NextTetrimino(shape=random.choice(TETRIMINO_ID))
+                self.check_completed_lines()
+        if self.pressed[pygame.K_RIGHT] and not self.pressed[pygame.K_LEFT] and \
+                self.tetrimino.time_last_move_right / 1000 >= TIME_BETWEEN_MOVE:
+            self.tetrimino.move_right(self.grid_list)
+        if self.pressed[pygame.K_LEFT] and not self.pressed[pygame.K_RIGHT] and \
+                self.tetrimino.time_last_move_left / 1000 >= TIME_BETWEEN_MOVE:
+            self.tetrimino.move_left(self.grid_list)
+
+        self.update_statistics_board()
+
+    def update_grid(self):
+        self.grid = []
+        x = y = MARGIN
+        for line in self.grid_list:
+            for cube in line:
+                if cube == "w":
+                    self.grid.append(Cube(x=x, y=y, type="wall"))
+                elif cube == "e":
+                    self.grid.append(Cube(x=x, y=y))
+                else:
+                    self.grid.append(Cube(x=x, y=y, type=cube.upper()))
+                x += CUBE_SIZE
+            x = MARGIN
+            y += CUBE_SIZE
+
+    def update_statistics_board(self):
+        self.update_APM()
+        self.board[5].update_text(str(self.level))
+        self.board[6].update_text(str(self.score))
+        self.board[7].update_text(str(self.lines))
+        self.board[8].update_text(str(int(self.APM)))
+        self.board[9].update_text(str(int(self.get_playing_time())))
+
+    def check_completed_lines(self):
+        nb_lines = "TODO"
 
     def get_playing_time(self):
         return self.time_playing / 1000
@@ -89,12 +158,19 @@ class Game:
     def update_APM(self):
         self.APM = self.actions / self.get_playing_time()
 
-    def pause(self):
-        # self.pause_clock = pygame.time.Clock()
+    def update_speed(self):
+        try:
+            self.speed = SPEED_LEVEL[self.level]
+        except KeyError:
+            # if level is over 28
+            self.speed = SPEED_LEVEL["+"]
+
+    def update_time_out_of_playing(self):
+        self.time_out_of_playing += self.clock.get_time()
         self.clock.tick()
 
-    def resume(self):
-        self.time_out_of_playing += self.clock.get_time()
+    def update_time_playing(self):
+        self.time_playing += self.clock.get_time()
         self.clock.tick()
 
 

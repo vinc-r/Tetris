@@ -73,6 +73,11 @@ NEXT_TETRIS_CUBES_POS = {
 # PAUSE SIZE POS
 PAUSE_MESSAGE_POS = (110, 250)
 
+# GAME OVER SIZE POS
+GAME_OVER_IMAGE_POS = (210, 180)
+GAME_OVER_MENU_IMAGE_POS = (255, 580)
+GAME_OVER_MENU_IMAGE_SIZE = (210, 50)
+
 ##################
 # GAMEPLAY INFOS #
 ##################
@@ -167,6 +172,7 @@ class AZERTY:
     K_p = pygame.K_p
     K_r = pygame.K_r
     K_q = pygame.K_a
+    K_m = pygame.K_SEMICOLON
     K_SPACE = pygame.K_SPACE
     K_LEFT = pygame.K_LEFT
     K_RIGHT = pygame.K_RIGHT

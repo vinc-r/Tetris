@@ -113,13 +113,19 @@ class Tetrimino:
                     break
 
         if movement_allowed:
-
             for cube in self.cubes:
                 if cube.pos != "center":
                     cube.rect.x += CUBE_SIZE * SPIN_3X3[cube.pos][0]
                     cube.rect.y += CUBE_SIZE * SPIN_3X3[cube.pos][1]
                     cube.pos = SPIN_3X3[cube.pos][2]
             print("SPIN")
+
+    def is_over_other_cube(self, grid):
+        for cube in self.cubes:
+            pos = convert_pixel_position((cube.rect.x, cube.rect.y))
+            if grid[pos[1]][pos[0]] != "e":
+                return True
+        return False
 
 
 class NextTetrimino:

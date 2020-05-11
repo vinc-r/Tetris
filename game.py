@@ -93,6 +93,9 @@ class Game:
             pygame.K_DOWN: False
         }
 
+    def new_game(self):
+        self.__init__()
+
     def update_game(self):
         # Update moving clocks
         self.tetrimino.time_last_move_down += self.tetrimino.clock_down.get_time()
@@ -117,13 +120,17 @@ class Game:
                 self.update_grid()
                 shape = self.next_tetrimino.shape
                 exec('self.tetrimino = ' + shape + '()')
+                if self.tetrimino.is_over_other_cube(self.grid_list):
+                    return "game_over"
                 self.next_tetrimino = NextTetrimino(shape=random.choice(TETRIMINO_ID))
                 self.check_completed_lines()
         if self.pressed[pygame.K_RIGHT] and not self.pressed[pygame.K_LEFT] and \
                 self.tetrimino.time_last_move_right / 1000 >= TIME_BETWEEN_MOVE:
+            self.actions += 1
             self.tetrimino.move_right(self.grid_list)
         if self.pressed[pygame.K_LEFT] and not self.pressed[pygame.K_RIGHT] and \
                 self.tetrimino.time_last_move_left / 1000 >= TIME_BETWEEN_MOVE:
+            self.actions += 1
             self.tetrimino.move_left(self.grid_list)
 
         self.update_statistics_board()
@@ -145,7 +152,7 @@ class Game:
 
     def update_statistics_board(self):
         self.update_APM()
-        self.board[5].update_text(str(self.level))
+        self.board[5].update_text(str(self.level_score))
         self.board[6].update_text(str(self.score))
         self.board[7].update_text(str(self.lines))
         self.board[8].update_text(str(int(self.APM)))
@@ -178,7 +185,10 @@ class Game:
         return self.time_playing / 1000
 
     def update_APM(self):
-        self.APM = self.actions / self.get_playing_time()
+        try:
+            self.APM = self.actions / (self.get_playing_time() / 60)
+        except ZeroDivisionError:
+            self.APM = 0
 
     def update_speed(self):
         try:

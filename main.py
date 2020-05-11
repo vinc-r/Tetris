@@ -1,6 +1,4 @@
-import pygame
 import os
-from constants import *
 from game import Game
 from functions_handdle_state import *
 
@@ -34,7 +32,6 @@ if __name__ == "__main__":
         screen.fill(BLACK)
 
         print(state)
-        print(game.tetrimino.spin_state)
 
         if state == "playing":
             state, running = handle_state_playing(game=game, screen=screen, sound=sound)
@@ -42,6 +39,8 @@ if __name__ == "__main__":
             state, running = handle_state_pause(game=game, screen=screen, sound=sound)
         elif state == "menu":
             state, running = handle_state_menu(game=game, screen=screen, bg=background, sound=sound)
+        elif state == "game_over":
+            state, running = handle_state_game_over(game=game, screen=screen, sound=sound)
 
         # update screen
         pygame.display.flip()

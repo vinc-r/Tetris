@@ -2,9 +2,10 @@ import pygame
 import random
 from button import Button
 from cube import Cube
-from statistics_borad import Board
+from board import Board
 from constants import *
 from tetrimino import *
+from leaderboard import Leaderboard
 
 
 class Game:
@@ -83,7 +84,24 @@ class Game:
             Board("Next Tetrimino", pos=NEXT_TETRIS_TEXT_POS)
         ]
 
-        exec('self.tetrimino = ' + random.choice(TETRIMINO_ID) + '()')
+        self.leaderboard = Leaderboard()
+
+        shape = random.choice(TETRIMINO_ID)
+        if shape == "I":
+            self.tetrimino = I()
+        elif shape == "O":
+            self.tetrimino = O()
+        elif shape == "J":
+            self.tetrimino = J()
+        elif shape == "Z":
+            self.tetrimino = Z()
+        elif shape == "S":
+            self.tetrimino = S()
+        elif shape == "I":
+            self.tetrimino = I()
+        elif shape == "L":
+            self.tetrimino = L()
+
         self.next_tetrimino = NextTetrimino(shape=random.choice(TETRIMINO_ID))
 
         # pressed keyboard
@@ -113,7 +131,7 @@ class Game:
             # if triomino can't move down => new triomino
             if type(positions) == list:
                 # update score
-                self.score += SCORING["tetrimino"]
+                self.score += SCORING["tetrimino"] * (self.level + 1)
                 # add triomino to grid if can't move down
                 for pos in positions:
                     self.grid_list[pos[1]][pos[0]] = self.tetrimino.shape.lower()
@@ -121,6 +139,10 @@ class Game:
                 shape = self.next_tetrimino.shape
                 exec('self.tetrimino = ' + shape + '()')
                 if self.tetrimino.is_over_other_cube(self.grid_list):
+                    # game over
+                    self.leaderboard.new_record(
+                        self.score, self.level, self.lines, int(self.APM), int(self.time_playing / 1000)
+                    )
                     return "game_over"
                 self.next_tetrimino = NextTetrimino(shape=random.choice(TETRIMINO_ID))
                 self.check_completed_lines()
@@ -152,7 +174,7 @@ class Game:
 
     def update_statistics_board(self):
         self.update_APM()
-        self.board[5].update_text(str(self.level_score))
+        self.board[5].update_text(str(self.level))
         self.board[6].update_text(str(self.score))
         self.board[7].update_text(str(self.lines))
         self.board[8].update_text(str(int(self.APM)))
@@ -177,9 +199,8 @@ class Game:
             self.lines += nb_lines
             self.level_score += LEVEL_SCORING[str(nb_lines)+"_line"]
             self.level = self.level_score // 10
-            self.score += SCORING[str(nb_lines)+"_line"]
+            self.score += SCORING[str(nb_lines)+"_line"] * (self.level + 1)
             self.update_speed()
-
 
     def get_playing_time(self):
         return self.time_playing / 1000
@@ -204,5 +225,4 @@ class Game:
     def update_time_playing(self):
         self.time_playing += self.clock.get_time()
         self.clock.tick()
-
 

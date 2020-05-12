@@ -1,9 +1,11 @@
 import os
 from game import Game
 from functions_handdle_state import *
+from leaderboard import *
 
 
 if __name__ == "__main__":
+
 
     # initialize pygame window
     os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % WINDOWS_POSITION
@@ -41,6 +43,8 @@ if __name__ == "__main__":
             state, running = handle_state_menu(game=game, screen=screen, bg=background, sound=sound)
         elif state == "game_over":
             state, running = handle_state_game_over(game=game, screen=screen, sound=sound)
+        elif state == "leaderboard":
+            state, running = handle_state_leaderboard(game=game, screen=screen, sound=sound)
 
         # update screen
         pygame.display.flip()
@@ -50,3 +54,4 @@ if __name__ == "__main__":
             sound.stop()
             pygame.quit()
             print("\nGOOD BYE !")
+

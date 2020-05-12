@@ -1,7 +1,6 @@
 import numpy as np
 import pygame
 
-
 ###################
 # INTERFACE INFOS #
 ###################
@@ -9,8 +8,8 @@ import pygame
 TITLE = "Tetris"
 ICON = 'img/icone_tetris_2.png'
 MUSIC = "sound/Tetris-99-Theme.wav"
-# MUSIC = "sound/Original-Tetris-Theme.wav"
-VOLUME = .1
+MUSIC = "sound/Original-Tetris-Theme.wav"
+VOLUME = .5
 
 WINDOWS_POSITION = (200, 30)
 SCREEN_WIDTH = 720
@@ -24,6 +23,9 @@ WHITE = (255, 255, 255)
 # FONTS
 FONT_ARCADE_IN = 'font/8-bit Arcade In.ttf'
 FONT_ARCADE_OUT = 'font/8-bit Arcade OUT.ttf'
+
+# Max name length for leaderboard
+MAX_NAME_LENGTH = 6
 
 ####################
 # BUTTONS SIZE/POS #
@@ -77,6 +79,16 @@ PAUSE_MESSAGE_POS = (110, 250)
 GAME_OVER_IMAGE_POS = (210, 180)
 GAME_OVER_MENU_IMAGE_POS = (255, 580)
 GAME_OVER_MENU_IMAGE_SIZE = (210, 50)
+
+# LEADERBOARD SIZE POS
+LEADERBOARD_POS = (20, 70)
+LEADERBOARD_MENU_POS = (260, 410)
+LEADERBOARD_MENU_SIZE = (210, 50)
+LEADERBOARD_COL_WIDTH = 110
+LEADERBOARD_ROW_HEIGHT = 55
+MAX_LEADERBOARD = 5
+LEADERBOARD_BG_POS = (-200, 100)
+SUPP_COL_OFFSET = 25        # larger col for score
 
 ##################
 # GAMEPLAY INFOS #
@@ -172,6 +184,7 @@ class AZERTY:
     K_p = pygame.K_p
     K_r = pygame.K_r
     K_q = pygame.K_a
+    K_l = pygame.K_l
     K_m = pygame.K_SEMICOLON
     K_SPACE = pygame.K_SPACE
     K_LEFT = pygame.K_LEFT
